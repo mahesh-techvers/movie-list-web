@@ -1,113 +1,114 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Movie from "../components/Movie";
 import SearchForm from "../components/SearchForm";
 import { searchMovies, fetchPopularMovies } from "../services/api";
 
-const movieData = [{
-    id: 1,
-    title: 'Terminator',
-    year: 2022,
-    posterUrl: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1170&q=80',
-    rating: 8.5,
-    genre: 'Action',
-    description: 'Movie 1 is a great movie with lots of action and excitement.'
-}, {
-    id: 2,
-    title: 'Titanic',
-    year: 2022,
-    posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1170&q=80',
-    rating: 8.5,
-    genre: 'Action',
-    description: 'Movie 2 is a great movie with lots of action and excitement.'
-}, {
-    id: 3,
-    title: 'Lion King',
-    year: 2022,
-    posterUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1170&q=80',
-    rating: 8.5,
-    genre: 'Action',
-    description: 'Movie 3 is a great movie with lots of action and excitement.'
-}, {
-    id: 4,
-    title: 'The Dark Knight',
-    year: 2022,
-    posterUrl: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1170&q=80',
-    rating: 8.5,
-    genre: 'Action',
-    description: 'Movie 4 is a great movie with lots of action and excitement.'
-}, {
-    id: 5,
-    title: 'Inception',
-    year: 2022,
-    posterUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1170&q=80',
-    rating: 8.5,
-    genre: 'Action',
-    description: 'Movie 5 is a great movie with lots of action and excitement.'
-}, {
-    id: 6,
-    title: 'The Matrix',
-    year: 2022,
-    posterUrl: 'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1170&q=80',
-    rating: 8.5,
-    genre: 'Action',
-    description: 'Movie 6 is a great movie with lots of action and excitement.'
-}]
-const serachResult = (e) => {
-    e.preventDefault();
-    alert('Button clicked!!!')
-}
-
 function Home() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [movies, setMovies] = useState([])
-    const [error, serError] = useState(null)
-    const [loading, setLoading] = useState(false)
+    const [movies, setMovies] = useState([]);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isSearching, setIsSearching] = useState(false);
 
+    // Fetch popular movies when page changes (only when not searching)
     useEffect(() => {
+        if (isSearching) return;
+
         const getPopularMovies = async () => {
             setLoading(true);
-            // const data = await fetchPopularMovies();
-            // console.log('API Response movies---->', data)
-            // setMovies(data);
             try {
-                const data = await fetchPopularMovies();
-                console.log('API Response movies---->', data)
-                setMovies(data);
-            } catch (error) {
-                console.log("Error while fetching the data ", error)
-                serError("failed to fetch data...")
-            }
-            finally {
+                const data = await fetchPopularMovies(page);
+                setMovies(prev => {
+                    // Avoid duplicates on re-render
+                    const existingIds = new Set(prev.map(m => m.id));
+                    const newMovies = data.results.filter(m => !existingIds.has(m.id));
+                    return [...prev, ...newMovies];
+                });
+                setHasMore(data.page < data.total_pages);
+            } catch (err) {
+                console.error("Error while fetching the data", err);
+                setError("Failed to fetch movies...");
+            } finally {
                 setLoading(false);
             }
-        }
+        };
         getPopularMovies();
-    }, [])
+    }, [page, isSearching]);
+
+    // IntersectionObserver — watches the last movie card
+    const observer = useRef();
+    const lastMovieRef = useCallback(node => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore && !isSearching) {
+                setPage(prev => prev + 1);
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [loading, hasMore, isSearching]);
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        const results = await searchMovies(searchQuery);
-        setMovies(results);
-    }
-
+        if (!searchQuery.trim()) {
+            // Reset to infinite scroll mode
+            setIsSearching(false);
+            setMovies([]);
+            setPage(1);
+            setHasMore(true);
+            return;
+        }
+        setIsSearching(true);
+        setLoading(true);
+        try {
+            const results = await searchMovies(searchQuery);
+            setMovies(results || []);
+            setHasMore(false);
+        } catch (err) {
+            setError("Search failed...");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="home-container">
-            {error && <p>{error}</p>}
-            {loading && <p>Loading movies...</p>}
-            <SearchForm 
-                searchQuery={searchQuery} 
-                setSearchQuery={setSearchQuery} 
-                handleSearch={handleSearch} 
+            {error && <p className="error-message">{error}</p>}
+
+            <SearchForm
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                handleSearch={handleSearch}
             />
+
             <div className="movies-grid">
-                {movies?.map(movie => {
-                    return (movie.title.toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase()) &&
-                        <Movie key={movie.id} movie={movie} />)
+                {movies.map((movie, index) => {
+                    // Attach the observer ref to the last card
+                    if (movies.length === index + 1) {
+                        return <div ref={lastMovieRef} key={movie.id}><Movie movie={movie} /></div>;
+                    }
+                    return <Movie key={movie.id} movie={movie} />;
                 })}
             </div>
+
+            {loading && (
+                <div className="infinite-scroll-loader">
+                    <div className="loader-spinner"></div>
+                    <p>Loading more movies...</p>
+                </div>
+            )}
+
+            {!hasMore && !loading && movies.length > 0 && (
+                <p className="end-of-list">
+                    🎬 You've seen all {movies.length} movies!
+                </p>
+            )}
         </div>
     );
 }
 
-export default Home
+export default Home;

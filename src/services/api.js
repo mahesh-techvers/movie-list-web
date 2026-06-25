@@ -4,11 +4,11 @@ const BASE_URL = 'https://api.themoviedb.org/3'
 // const API_KEY = '778959718e6e51d5436282488d5b8516';
 // const BASE_URL = 'https://api.themoviedb.org/3';
 
-export const fetchPopularMovies = async () => {
-    const response = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}`);
+export const fetchPopularMovies = async (page = 1) => {
+    const response = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`);
     const data = await response.json();
     console.log('API Response movies---->', data.results)
-    return data.results
+    return data; // returns { results, page, total_pages, total_results }
 }
 
 export const searchMovies = async (query) => {
