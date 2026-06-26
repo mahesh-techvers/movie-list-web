@@ -5,6 +5,7 @@ const MovieContext = createContext();
 export const useMovieContext = () => useContext(MovieContext);
 
 export const MovieProvider = ({ children }) => {
+    // ── Favorites ────────────────────────────────────────────────────────────
     const [favorites, setFavorites] = useState([]);
 
     useEffect(() => {
@@ -28,11 +29,32 @@ export const MovieProvider = ({ children }) => {
         return favorites.some(movie => movie.id === movieId);
     };
 
+    // ── Movie list (persisted across navigation) ──────────────────────────────
+    const [movies, setMovies] = useState([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [movieListError, setMovieListError] = useState(null);
+
     const value = {
         favorites,
         addToFavorites,
         removeFromFavorites,
-        isFavorite
+        isFavorite,
+        // Movie list state
+        movies,
+        setMovies,
+        page,
+        setPage,
+        hasMore,
+        setHasMore,
+        isSearching,
+        setIsSearching,
+        searchQuery,
+        setSearchQuery,
+        movieListError,
+        setMovieListError,
     };
 
     return (

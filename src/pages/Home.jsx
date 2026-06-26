@@ -1,18 +1,29 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import Movie from "../components/Movie";
 import SearchForm from "../components/SearchForm";
 import { searchMovies, fetchPopularMovies } from "../services/api";
+import { useMovieContext } from "../context/MovieContext";
 
 function Home() {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [movies, setMovies] = useState([]);
-    const [error, setError] = useState(null);
+    const {
+        movies,
+        setMovies,
+        page,
+        setPage,
+        hasMore,
+        setHasMore,
+        isSearching,
+        setIsSearching,
+        searchQuery,
+        setSearchQuery,
+        movieListError: error,
+        setMovieListError: setError,
+    } = useMovieContext();
+
     const [loading, setLoading] = useState(false);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const [isSearching, setIsSearching] = useState(false);
 
     // Fetch popular movies when page changes (only when not searching)
+    // Skip if we already have data for this page (coming back from MovieDetails)
     useEffect(() => {
         if (isSearching) return;
 
@@ -21,9 +32,11 @@ function Home() {
             try {
                 const data = await fetchPopularMovies(page);
                 setMovies(prev => {
-                    // Avoid duplicates on re-render
+                    // Avoid duplicates on re-render / back-navigation
                     const existingIds = new Set(prev.map(m => m.id));
                     const newMovies = data.results.filter(m => !existingIds.has(m.id));
+                    // If no new movies were added, data is already cached — skip update
+                    if (newMovies.length === 0) return prev;
                     return [...prev, ...newMovies];
                 });
                 setHasMore(data.page < data.total_pages);
