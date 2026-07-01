@@ -44,10 +44,21 @@ function MovieDetails() {
         }
     };
 
+    const imagePath = movie.backdrop_path || movie.poster_path;
+    const backgroundStyle = imagePath
+        ? {
+              backgroundImage: `linear-gradient(to top, rgba(11, 12, 16, 1) 5%, rgba(11, 12, 16, 0) 70%), linear-gradient(to right, rgba(11, 12, 16, 0.9) 0%, rgba(11, 12, 16, 0) 60%), url("https://image.tmdb.org/t/p/original${imagePath}")`
+          }
+        : {};
+
     return (
-        <div className="movie-details-wrapper" style={{
-            backgroundImage: `linear-gradient(to top, rgba(11, 12, 16, 1) 5%, rgba(11, 12, 16, 0) 70%), linear-gradient(to right, rgba(11, 12, 16, 0.9) 0%, rgba(11, 12, 16, 0) 60%), url("https://image.tmdb.org/t/p/original${movie.backdrop_path || movie.poster_path}")`
-        }}>
+        <div className={`movie-details-wrapper${imagePath ? '' : ' no-backdrop'}`} style={backgroundStyle}>
+            {!imagePath && (
+                <div className="details-no-image">
+                    <span className="details-no-image-icon">🎬</span>
+                    <span className="details-no-image-text">No Image Available</span>
+                </div>
+            )}
             <div className="details-content">
                 <h1 className="details-title">{movie.title}</h1>
                 <div className="details-meta">
@@ -69,7 +80,7 @@ function MovieDetails() {
 
                 <div className="details-actions">
                     <button className={`action-btn circular ${favorite ? 'active' : ''}`} onClick={handleToggleFavorite} title="Bookmark">
-                        {favorite ? '✔️' : '🔖'}
+                        {favorite ? '❤️' : '🤍'}
                     </button>
                     <button className="action-btn circular" title="Like">👍</button>
                     <button className="action-btn circular" title="Dislike">👎</button>

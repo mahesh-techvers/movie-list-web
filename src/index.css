@@ -142,6 +142,30 @@ code {
   display: block;
 }
 
+.no-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  gap: 12px;
+}
+
+.no-image-icon {
+  font-size: 3.5rem;
+  opacity: 0.6;
+  filter: grayscale(0.3);
+}
+
+.no-image-text {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+
 .movie-rating-badge {
   position: absolute;
   top: 10px;
@@ -424,6 +448,39 @@ code {
   align-items: center;
   padding: 4rem;
   text-align: left;
+}
+
+.movie-details-wrapper.no-backdrop {
+  background: linear-gradient(135deg, #0b0c10 0%, #1a1a2e 40%, #16213e 70%, #0f3460 100%);
+  position: relative;
+}
+
+.details-no-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  opacity: 0.4;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.details-no-image-icon {
+  font-size: 8rem;
+  display: block;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.details-no-image-text {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  display: block;
 }
 
 .details-content {

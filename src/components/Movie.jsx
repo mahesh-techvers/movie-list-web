@@ -26,7 +26,14 @@ function Movie({ movie }) {
     return (
         <div className="movie-card" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
             <div className="movie-poster-container">
-                <img src={`${"https://image.tmdb.org/t/p/w500"}${movie.poster_path}`} alt="" className="movie-poster" />
+                {movie.poster_path ? (
+                    <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} className="movie-poster" />
+                ) : (
+                    <div className="movie-poster no-image-placeholder">
+                        <span className="no-image-icon">🎬</span>
+                        <span className="no-image-text">No Image Available</span>
+                    </div>
+                )}
                 <div className="movie-rating-badge">
                     ⭐ {rating}
                 </div>
